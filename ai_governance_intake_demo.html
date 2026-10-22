@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Governance Intake | Demo Prototype</title>
+<style>
+:root{font-family:Inter,Arial,sans-serif;color:#172238;background:#f3f6fb}*{box-sizing:border-box}body{margin:0}.wrap{max-width:950px;margin:32px auto;padding:0 20px}.hero{background:#142744;color:white;border-radius:18px;padding:30px}.hero h1{margin:0 0 8px;font-size:30px}.hero p{color:#cbd8ed;margin:0}.pill{display:inline-block;background:#e5ecff;color:#183967;padding:6px 12px;border-radius:99px;font-size:12px;font-weight:bold;margin-bottom:12px}.panel{background:white;border:1px solid #dbe3ef;border-radius:16px;padding:26px;margin:20px 0;box-shadow:0 4px 18px #182e4810}h2{margin-top:0;font-size:21px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}@media(max-width:650px){.grid{grid-template-columns:1fr}}label{display:block;font-weight:650;margin-bottom:7px}input,select,textarea{width:100%;border:1px solid #b9c8d9;border-radius:9px;padding:11px;font:inherit;background:white}textarea{min-height:95px}small{color:#52617a}button{background:#2358a5;border:0;border-radius:9px;color:white;padding:12px 18px;font-weight:700;cursor:pointer;margin:5px 7px 5px 0}button.secondary{background:#e6eef8;color:#18375c}.field{margin-bottom:17px}.risk{padding:18px;border-radius:12px;background:#f1f5fa;border-left:6px solid #637c9e}.risk.high{border-color:#c73636;background:#fff0f0}.risk.medium{border-color:#db8b12;background:#fff7e9}.risk.low{border-color:#19865d;background:#ecfaf3}.muted{color:#5d6c7d}#result{display:none}ul{line-height:1.7}footer{color:#53657a;font-size:13px;margin:20px 0 40px}
+</style></head><body><div class="wrap">
+<header class="hero"><span class="pill">PORTFOLIO DEMONSTRATION · NOT A PRODUCTION SYSTEM</span><h1>AI Governance Intake & Risk Triage</h1><p>Collect an AI use-case request, flag preliminary risks, and route it for appropriate human review.</p></header>
+<section class="panel"><h2>1. New AI project intake</h2><form id="intake">
+<div class="grid"><div class="field"><label for="project">Project name *</label><input id="project" required maxlength="100" placeholder="e.g. Customer support assistant"></div><div class="field"><label for="owner">Business owner / team *</label><input id="owner" required maxlength="100" placeholder="e.g. Customer Operations"></div></div>
+<div class="field"><label for="purpose">What will the AI system do? *</label><textarea id="purpose" required maxlength="600" placeholder="Describe its intended use, users, and business outcome."></textarea></div>
+<div class="grid">
+<div class="field"><label for="impact">Decision impact *</label><select id="impact" required><option value="">Select</option><option value="informational">Informational assistance only</option><option value="recommendation">Recommends actions for a human</option><option value="consequential">Influences consequential decisions (e.g. hiring, credit, health)</option></select></div>
+<div class="field"><label for="data">Data sensitivity *</label><select id="data" required><option value="">Select</option><option value="public">Public or synthetic data</option><option value="internal">Internal business data</option><option value="personal">Personal data</option><option value="sensitive">Sensitive personal / regulated data</option></select></div>
+<div class="field"><label for="external">External model or vendor? *</label><select id="external" required><option value="">Select</option><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not sure</option></select></div>
+<div class="field"><label for="oversight">Human oversight before important actions? *</label><select id="oversight" required><option value="">Select</option><option value="yes">Yes</option><option value="partial">Some / partial</option><option value="no">No</option></select></div>
+<div class="field"><label for="exposure">Who interacts with the AI? *</label><select id="exposure" required><option value="">Select</option><option value="internal">Internal staff only</option><option value="external">Customers or public</option></select></div>
+<div class="field"><label for="testing">Pre-deployment testing plan? *</label><select id="testing" required><option value="">Select</option><option value="documented">Documented</option><option value="planned">Planned, not yet documented</option><option value="none">No plan yet</option></select></div></div>
+<div class="field"><label for="notes">Known risks or dependencies (optional)</label><textarea id="notes" maxlength="500" placeholder="Examples: hallucinations, bias, vendor contract, privacy review"></textarea></div>
+<button type="submit">Assess intake</button><button class="secondary" type="button" id="example">Load example</button><button class="secondary" type="reset">Clear form</button></form></section>
+<section class="panel" id="result" aria-live="polite"><h2>2. Preliminary assessment</h2><div id="riskbox" class="risk"><strong id="level"></strong><p id="reason"></p></div><h3>Required next steps</h3><ul id="actions"></ul><p class="muted"><strong>Review status:</strong> Pending human assessment. This prototype never automatically approves a project.</p><button id="download" type="button">Download assessment JSON</button><button id="print" class="secondary" type="button">Print / Save PDF</button></section>
+<footer>Demonstration built for portfolio purposes. Rule-based screening only; not legal advice, not an ISO/IEC 42001 certification, and not a determination under the EU AI Act. Do not enter real confidential or sensitive personal information. All processing happens in this browser; no server submission or persistent storage.</footer>
+</div>
+<script>
+let last=null;
+const $=id=>document.getElementById(id);
+function value(id){return $(id).value.trim()}
+function add(text){let li=document.createElement('li');li.textContent=text;$('actions').appendChild(li)}
+$('intake').addEventListener('submit',function(e){
+e.preventDefault();if(!this.reportValidity())return;
+const data={project:value('project'),owner:value('owner'),purpose:value('purpose'),impact:value('impact'),data:value('data'),external:value('external'),oversight:value('oversight'),exposure:value('exposure'),testing:value('testing'),notes:value('notes')};
+let score=0,flags=[];
+if(data.impact==='recommendation'){score+=2;flags.push('AI recommendations can influence human decisions')}
+if(data.impact==='consequential'){score+=5;flags.push('Potentially consequential decisions require specialist review')}
+if(data.data==='internal')score+=1;
+if(data.data==='personal'){score+=3;flags.push('Personal data handling needs privacy review')}
+if(data.data==='sensitive'){score+=5;flags.push('Sensitive or regulated data needs privacy and security review')}
+if(data.external==='yes'){score+=2;flags.push('External vendor/model requires third-party review')}
+if(data.external==='unknown'){score+=2;flags.push('Vendor status needs clarification')}
+if(data.oversight==='partial'){score+=2;flags.push('Human oversight is incomplete')}
+if(data.oversight==='no'){score+=4;flags.push('Human oversight is missing')}
+if(data.exposure==='external'){score+=1;flags.push('External user exposure increases operational risk')}
+if(data.testing==='planned')score+=1;
+if(data.testing==='none'){score+=3;flags.push('Testing plan is missing')}
+const tier=score>=8?'HIGH':score>=4?'MEDIUM':'LOW';
+$('riskbox').className='risk '+tier.toLowerCase();$('level').textContent=tier+' preliminary risk · score '+score;
+$('reason').textContent=flags.length?flags.join('; ')+'.':'No elevated indicators were selected; a human review is still required.';
+$('actions').replaceChildren();add('Assign an accountable reviewer and confirm the intended use, scope, and business owner.');
+if(data.impact==='consequential')add('Escalate to legal/compliance and evaluate whether sector-specific or jurisdiction-specific obligations apply.');
+if(['personal','sensitive'].includes(data.data))add('Conduct privacy review, data minimization, access controls, and retention assessment.');
+if(data.external!=='no')add('Complete vendor due diligence, data-flow mapping, and contractual/security checks.');
+if(data.oversight!=='yes')add('Document human oversight, intervention, and escalation controls before deployment.');
+if(data.testing!=='documented')add('Prepare documented testing for accuracy, reliability, misuse, and failure scenarios.');
+add('Record evidence, approval decision, monitoring plan, and reassessment triggers.');
+last={demo:true,created_at:new Date().toISOString(),...data,score,tier,flags,status:'Pending human review'};
+$('result').style.display='block';$('result').scrollIntoView({behavior:'smooth'});
+});
+$('download').addEventListener('click',()=>{if(!last)return;let blob=new Blob([JSON.stringify(last,null,2)],{type:'application/json'});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download='ai-intake-assessment.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});
+$('print').addEventListener('click',()=>window.print());
+$('example').addEventListener('click',()=>{const demo={project:'Customer Support Copilot (Demo)',owner:'Customer Operations',purpose:'Suggest draft replies to customer inquiries; employees approve all responses.',impact:'recommendation',data:'personal',external:'yes',oversight:'yes',exposure:'internal',testing:'planned',notes:'Example only: verify vendor retention terms and hallucination controls.'};Object.entries(demo).forEach(([k,v])=>$(k).value=v)});
+$('intake').addEventListener('reset',()=>{$('result').style.display='none';last=null});
+</script></body></html>
